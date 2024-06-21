@@ -49,6 +49,8 @@ def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
         print("Config table doesn't exist.s")
 
 
+
+
 def main():
     args = parse_cmd_line()
     if args.cmd == 'save':

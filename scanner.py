@@ -5,18 +5,18 @@ from enum import Enum
 from typing import Optional
 
 
-class TargetEventType(Enum):
+class TargetChangeType(Enum):
     VALUE_CHANGED = 1
     MAX_ERRORS_REACHED = 2
 
 
-class TargetEvent:
+class TargetChange:
     def __init__(self,
-                 event_type: TargetEventType,
+                 change_type: TargetChangeType,
                  old_value: str = '',
                  new_value: str = '',
                  error_msg: str = ''):
-        self.event_type = event_type
+        self.change_type = change_type
         self.old_value = old_value
         self.new_value = new_value
         self.error_msg = error_msg
@@ -31,17 +31,17 @@ class Scanner:
         self.probe_state_repo = probe_state_repo
         self.prober = prober
 
-    def scan(self, probes: list[Probe]) -> list[TargetEvent]:
-        res: list[TargetEvent] = []
+    def scan(self, probes: list[Probe]) -> list[TargetChange]:
+        res: list[TargetChange] = []
         for probe in probes:
             evt = self.check_probe(probe)
             if evt is not None:
                 res.append(evt)
         return res
 
-    def check_probe(self, probe: Probe) -> Optional[TargetEvent]:
+    def check_probe(self, probe: Probe) -> Optional[TargetChange]:
         ps = self.probe_state_repo.find_state(probe.probe_name)
-        event = None
+        change = None
         if ps is None:
             pr = self.prober.do_probe(probe)
             if pr.is_error:
@@ -55,16 +55,16 @@ class Scanner:
                 pr = self.prober.do_probe(probe)
                 if pr.is_error:
                     if ps.num_errors == self.MAX_ERRORS - 1:
-                        event = TargetEvent(
-                            event_type=TargetEventType.MAX_ERRORS_REACHED,
+                        change = TargetChange(
+                            change_type=TargetChangeType.MAX_ERRORS_REACHED,
                             error_msg=pr.error_msg)
                     self.probe_state_repo.update_state_with_failure(probe.probe_name, pr.error_msg)
                 else:
                     if pr.value != ps.value:
-                        event = TargetEvent(
-                            event_type=TargetEventType.VALUE_CHANGED,
+                        change = TargetChange(
+                            change_type=TargetChangeType.VALUE_CHANGED,
                             old_value=ps.value,
                             new_value=pr.value)
                         self.probe_state_repo.update_state_with_success(probe.probe_name, pr.value)
 
-        return event
+        return change

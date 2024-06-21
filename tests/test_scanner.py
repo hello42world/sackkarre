@@ -4,7 +4,7 @@ from typing import Optional
 from probe import Probe
 import probe_result
 from probe_state import ProbeState
-from scanner import Scanner, TargetEventType
+from scanner import Scanner, TargetChangeType
 from prober import IProber
 from probe_state_repo import IProbeStateRepo
 from probe_result import ProbeResult
@@ -62,7 +62,7 @@ class TestProber(unittest.TestCase):
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertTrue(state_repo.success_called)
         self.assertFalse(state_repo.failure_called)
-        self.assertEqual(TargetEventType.VALUE_CHANGED, target_event.event_type)
+        self.assertEqual(TargetChangeType.VALUE_CHANGED, target_event.change_type)
         self.assertEqual('43', target_event.old_value)
         self.assertEqual('42', target_event.new_value)
 
@@ -82,7 +82,7 @@ class TestProber(unittest.TestCase):
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertFalse(state_repo.success_called)
         self.assertTrue(state_repo.failure_called)
-        self.assertEqual(TargetEventType.MAX_ERRORS_REACHED, target_event.event_type)
+        self.assertEqual(TargetChangeType.MAX_ERRORS_REACHED, target_event.change_type)
         self.assertEqual('boom!', target_event.error_msg)
 
 
