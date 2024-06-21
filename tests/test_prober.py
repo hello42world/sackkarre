@@ -21,7 +21,8 @@ step_templates:
     expr: "$.offers[0].price"
 
 probes:
-  - name: TestThing
+  - id: 1
+    name: TestThing
     url: 'lidl_1'
     steps:
       - *lidl_xpath
@@ -41,7 +42,8 @@ step_templates:
     expr: "//script[@data-hid='foobar']"
 
 probes:
-  - name: TestThing
+  - id: 2
+    name: TestThing
     url: 'lidl_1'
     steps:
       - *lidl_xpath

@@ -5,25 +5,28 @@ step_templates:
   lidl_jpath: &lidl_jpath
     step_type: JPATH
     expr: "$.offers[0].price"
+  lidl_steps: &lidl_steps
+    - *lidl_xpath
+    - *lidl_jpath
 
 probes:
-  - name: Battery 4ah
+  - id: "1"
+    name: Battery 4ah
     url: 'https://www.lidl.de/p/parkside-20-v-akku-pap-20-b3-4-ah/p100367574'
-    steps:
-      - *lidl_xpath
-      - *lidl_jpath
-  - name: Socket set 1/2 24pc.
+    steps: *lidl_steps
+
+  - id: "2"
+    name: Socket set 1/2 24pc.
     url: 'https://www.lidl.de/p/parkside-stecknuss-satz-24-teilig-in-stabiler-metallbox/p100361532'
-    steps:
-      - *lidl_xpath
-      - *lidl_jpath
-  - name: Drill brushless (1)
+    steps: *lidl_steps
+
+  - id: "3"
+    name: Drill brushless (1)
     url: 'https://www.lidl.de/p/parkside-performance-20-v-akku-bohrschrauber-pabsp-20-li-c3-ohne-akku-und-ladegeraet/p100357900'
-    steps:
-      - *lidl_xpath
-      - *lidl_jpath
-  - name: Drill brushless (2)
+    steps: *lidl_steps
+
+  - id: "4"
+    name: Drill brushless (2)
     url: 'https://www.lidl.de/p/parkside-performance-20-v-akku-bohrschrauber-pabsp-20-li-c3-ohne-akku-und-ladegeraet/p100368895'
-    steps:
-      - *lidl_xpath
-      - *lidl_jpath
+    steps: *lidl_steps
+

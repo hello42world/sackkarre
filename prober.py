@@ -31,8 +31,6 @@ class Prober(IProber):
     def _do_probe(self, p: probe.Probe) -> str:
         # Get the page
         data = self.url_loader(p.target_url)
-        # with urllib.request.urlopen(p.url) as response:
-        #    data = response.read()
         for s in p.steps:
             if s.step_type == probe.ProbeStepType.XPATH:
                 data = self._step_xpath(data, s.expr)

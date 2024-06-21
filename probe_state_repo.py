@@ -9,15 +9,15 @@ from base_repo import BaseRepo
 
 class IProbeStateRepo:
     @abstractmethod
-    def find_state(self, probe_name: str) -> Optional[ProbeState]:
+    def find_state(self, probe_id: str) -> Optional[ProbeState]:
         pass
 
     @abstractmethod
-    def update_state_with_success(self, probe_name: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
         pass
 
     @abstractmethod
-    def update_state_with_failure(self, probe_name: str, error_msg: str) -> None:
+    def update_state_with_failure(self, probe_id: str, error_msg: str) -> None:
         pass
 
 
@@ -31,11 +31,11 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
         BaseRepo.__init__(self, db, table_name)
         self.consistent_read = consistent_read
 
-    def find_state(self, probe_name: str) -> Optional[ProbeState]:
+    def find_state(self, probe_id: str) -> Optional[ProbeState]:
         ps_tbl = self.db.Table(self.table_name)
         s = ps_tbl.get_item(
             Key={
-                'probe_name': probe_name
+                'probe_id': probe_id
             },
             ConsistentRead=self.consistent_read
         )
@@ -43,18 +43,18 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
             return None
         item = s['Item']
         return ProbeState(
-            probe_name=item['probe_name'],
+            probe_id=item['probe_id'],
             value=item['value'],
             num_errors=item['num_errors'],
             last_error=item['last_error'],
             last_updated=parser.parse(item['last_updated'])
         )
 
-    def update_state_with_success(self, probe_name: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
         ps_tbl = self.db.Table(self.table_name)
         ps_tbl.put_item(
             Item={
-                'probe_name': probe_name,
+                'probe_id': probe_id,
                 'value': str(probe_value),
                 'num_errors': 0,
                 'last_error': '',
@@ -62,11 +62,11 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
             }
         )
 
-    def update_state_with_failure(self, probe_name: str, error_msg: str) -> None:
+    def update_state_with_failure(self, probe_id: str, error_msg: str) -> None:
         ps_tbl = self.db.Table(self.table_name)
         ps_tbl.update_item(
             Key={
-                'probe_name': probe_name,
+                'probe_id': probe_id,
             },
             UpdateExpression="""SET 
                 last_error = :last_error, 
@@ -92,13 +92,13 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
             TableName=self.table_name,
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'probe_name',
+                    'AttributeName': 'probe_id',
                     'AttributeType': 'S'
                 },
             ],
             KeySchema=[
                 {
-                    'AttributeName': 'probe_name',
+                    'AttributeName': 'probe_id',
                     'KeyType': 'HASH'
                 },
             ],

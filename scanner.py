@@ -42,14 +42,14 @@ class Scanner:
         return res
 
     def check_probe(self, probe: Probe) -> Optional[TargetChange]:
-        ps = self.probe_state_repo.find_state(probe.probe_name)
+        ps = self.probe_state_repo.find_state(probe.probe_id)
         change = None
         if ps is None:
             pr = self.prober.do_probe(probe)
             if pr.is_error:
-                self.probe_state_repo.update_state_with_failure(probe.probe_name, pr.error_msg)
+                self.probe_state_repo.update_state_with_failure(probe.probe_id, pr.error_msg)
             else:
-                self.probe_state_repo.update_state_with_success(probe.probe_name, pr.value)
+                self.probe_state_repo.update_state_with_success(probe.probe_id, pr.value)
         else:
             if ps.num_errors >= self.MAX_ERRORS:
                 pass
@@ -61,7 +61,7 @@ class Scanner:
                             probe=probe,
                             change_type=TargetChangeType.MAX_ERRORS_REACHED,
                             error_msg=pr.error_msg)
-                    self.probe_state_repo.update_state_with_failure(probe.probe_name, pr.error_msg)
+                    self.probe_state_repo.update_state_with_failure(probe.probe_id, pr.error_msg)
                 else:
                     if pr.value != ps.value:
                         change = TargetChange(
@@ -69,6 +69,6 @@ class Scanner:
                             change_type=TargetChangeType.VALUE_CHANGED,
                             old_value=ps.value,
                             new_value=pr.value)
-                        self.probe_state_repo.update_state_with_success(probe.probe_name, pr.value)
+                        self.probe_state_repo.update_state_with_success(probe.probe_id, pr.value)
 
         return change

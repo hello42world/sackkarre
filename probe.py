@@ -16,9 +16,11 @@ class ProbeStep:
 
 class Probe:
     def __init__(self,
-                 name: str,
+                 probe_id: str,
+                 probe_name: str,
                  target_url: str,
                  steps: list[ProbeStep]):
-        self.probe_name = name
+        self.probe_id = probe_id
+        self.probe_name = probe_name
         self.target_url = target_url
         self.steps = steps

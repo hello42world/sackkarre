@@ -5,16 +5,17 @@ import yaml
 def load_from_str(probe_str: str) -> list[Probe]:
     probe_data = yaml.safe_load(probe_str)
     result: list[Probe] = []
-    # todo: Name must be unique
-    for probe in probe_data['probes']:
+    # todo: Id must be unique
+    for p in probe_data['probes']:
         steps: list[ProbeStep] = []
-        for step in probe['steps']:
+        for step in p['steps']:
             steps.append(ProbeStep(
                 step_type=ProbeStepType[step['step_type']],
                 expr=step['expr']))
         result.append(Probe(
-            name=probe['name'],
-            target_url=probe['url'],
+            probe_id=p['id'],
+            probe_name=p['name'],
+            target_url=p['url'],
             steps=steps
         ))
     return result

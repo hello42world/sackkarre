@@ -25,20 +25,20 @@ class FakeProbeStateRepo(IProbeStateRepo):
         self.success_called = False
         self.failure_called = False
 
-    def find_state(self, probe_name: str) -> Optional[ProbeState]:
+    def find_state(self, probe_id: str) -> Optional[ProbeState]:
         return self.state
 
-    def update_state_with_success(self, probe_name: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
         self.success_called = True
 
-    def update_state_with_failure(self, probe_name: str, error_msg: str) -> None:
+    def update_state_with_failure(self, probe_id: str, error_msg: str) -> None:
         self.failure_called = True
 
 
 class TestProber(unittest.TestCase):
     def test_new_probe_success(self):
         state_repo = FakeProbeStateRepo()
-        probe = Probe('foo', 'http://foo.foo', [])
+        probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
         scanner = Scanner(state_repo, prober)
         target_event = scanner.check_probe(probe)
@@ -48,7 +48,7 @@ class TestProber(unittest.TestCase):
 
     def test_new_probe_fail(self):
         state_repo = FakeProbeStateRepo()
-        probe = Probe('foo', 'http://foo.foo', [])
+        probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, is_error=True, error_msg='boom'))
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertFalse(state_repo.success_called)
@@ -56,8 +56,8 @@ class TestProber(unittest.TestCase):
         self.assertIsNone(target_event)
 
     def test_old_probe_changed(self):
-        state_repo = FakeProbeStateRepo(state=ProbeState(probe_name='foo', value='43'))
-        probe = Probe('foo', 'http://foo.foo', [])
+        state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', value='43'))
+        probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertTrue(state_repo.success_called)
@@ -67,8 +67,8 @@ class TestProber(unittest.TestCase):
         self.assertEqual('42', target_event.new_value)
 
     def test_old_probe_not_changed(self):
-        state_repo = FakeProbeStateRepo(state=ProbeState(probe_name='foo', value='42'))
-        probe = Probe('foo', 'http://foo.foo', [])
+        state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', value='42'))
+        probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertFalse(state_repo.success_called)
@@ -76,8 +76,8 @@ class TestProber(unittest.TestCase):
         self.assertIsNone(target_event)
 
     def test_error_limit_reached(self):
-        state_repo = FakeProbeStateRepo(state=ProbeState(probe_name='foo', num_errors=Scanner.MAX_ERRORS - 1))
-        probe = Probe('foo', 'http://foo.foo', [])
+        state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', num_errors=Scanner.MAX_ERRORS - 1))
+        probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, is_error=True, error_msg='boom!'))
         target_event = Scanner(state_repo, prober).check_probe(probe)
         self.assertFalse(state_repo.success_called)

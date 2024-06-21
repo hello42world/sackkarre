@@ -3,12 +3,12 @@ import datetime
 
 class ProbeState:
     def __init__(self,
-                 probe_name: str,
+                 probe_id: str,
                  value: str = '',
                  num_errors: int = 0,
                  last_error: str = '',
                  last_updated: datetime.datetime = None):
-        self.probe_name = probe_name
+        self.probe_id = probe_id
         self.value = value
         self.num_errors = num_errors
         self.last_error = last_error

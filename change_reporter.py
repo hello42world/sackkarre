@@ -3,7 +3,6 @@ import mypy_boto3_sns as sns
 import boto3
 
 from scanner import TargetChange, TargetChangeType
-import aws
 
 
 class IChangeReporter:
