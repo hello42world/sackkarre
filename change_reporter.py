@@ -42,3 +42,15 @@ class AwsSnsChangeReported(IChangeReporter):
         topic.publish(
             Message=generate_report(change_list)
         )
+
+
+class MulticastReporter(IChangeReporter):
+
+    def report_state_changes(self, change_list: list[TargetChange]) -> None:
+        for r in self.reporters:
+            r.report_state_changes(change_list)
+
+    def __init__(self, reporters: list[IChangeReporter]):
+        self.reporters = reporters
+
+

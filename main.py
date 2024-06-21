@@ -90,10 +90,11 @@ def main():
     elif args.cmd == 'dump':
         dump_probe_spec(get_db(args.aws_region), args.probe_key)
     elif args.cmd == 'run':
-        reporter = change_reporter.AwsSnsChangeReported(
+        sns_reporter = change_reporter.AwsSnsChangeReported(
             topic_name=args.aws_base_name,
             aws_region=args.aws_region)
-        # reporter = change_reporter.StdoutChangeReporter()
+        stdout_reporter = change_reporter.StdoutChangeReporter()
+        reporter = change_reporter.MulticastReporter([sns_reporter, stdout_reporter])
         run_price_check(get_db(args.aws_region), args.probe_key, reporter)
     elif args.cmd == 'aws-deploy':
         deploy_to_aws(args.aws_region, args.aws_base_name)
