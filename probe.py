@@ -25,9 +25,8 @@ class Probe:
         self.steps = steps
 
 
-def load(probe_file: str) -> list[Probe]:
-    with open(probe_file, 'r') as file:
-        probe_data = yaml.safe_load(file)
+def load_from_str(probe_str: str) -> list[Probe]:
+    probe_data = yaml.safe_load(probe_str)
     result: list[Probe] = []
     # todo: Name must be unique
     for probe in probe_data['probes']:
@@ -42,3 +41,9 @@ def load(probe_file: str) -> list[Probe]:
             steps=steps
         ))
     return result
+
+
+def load_from_file(probe_file: str) -> list[Probe]:
+    with open(probe_file, 'r') as file:
+        probe_str = file.read()
+    return load_from_str(probe_str)
