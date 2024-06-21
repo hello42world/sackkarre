@@ -21,14 +21,14 @@ def parse_cmd_line():
                         help='Path to the probe spec file')
     args = parser.parse_args()
     if args.cmd == 'save':
-        if args.probe_key is None:
+        if args.probe_file is None:
             raise Exception('save needs --probe-file')
     return args
 
 
-def get_db() -> dynamodb.ServiceResource:
-    # db = boto3.resource('dynamodb',aws_access_key_id='yyyy', aws_secret_access_key='xxxx', region_name='***')
-    db = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
+def get_db(region: str = 'us-east-1') -> dynamodb.ServiceResource:
+    db = boto3.resource('dynamodb', region_name=region)
+    # db = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
     return db
 
 
@@ -49,7 +49,7 @@ def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
         else:
             print(f'Config key {config_key} not found')
     else:
-        print("Config table doesn't exist.s")
+        print("Config table doesn't exist")
 
 
 def aws_lambda(event, context):
