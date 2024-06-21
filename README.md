@@ -28,6 +28,6 @@ How to install
 4. Edit probes file probe-lst-example.yaml
 5. Push the probe list to the cloud storage - 
    `.venv/bin/python main set-probe-list -f probe-lst-example.yaml` 
-6. By default, the lambda will not have any triggers. 
-   You can set it to run periodically by adding an EventBridge trigger.
+6. By default, the lambda will run every 6 hours.
+   An EventBridge rule will be created for that.
 

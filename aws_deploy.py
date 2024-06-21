@@ -196,6 +196,24 @@ class AwsDeploy:
         if len(rules['Rules']) > 0 and rules['Rules'][0]['Name'] == rule_name:
             eb.delete_rule(Name=rule_name)
 
+    def attach_event_bridge_target(self, base_name: str) -> None:
+        lambda_arn = f'arn:aws:lambda:{self.aws_region}:{aws.account_id()}:function:{base_name}'
+        rule_name = f'{base_name}_every_6_hours'
+        eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
+        eb.put_targets(
+            Rule=rule_name,
+            Targets=[{
+                'Id': base_name,
+                'Arn': lambda_arn
+            }]
+        )
+
+    def detach_event_bridge_target(self, base_name: str) -> None:
+        eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
+        rule_name = f'{base_name}_every_6_hours'
+        eb.remove_targets(Rule=rule_name, Ids=[base_name])
+
+
     def deploy_everything(self, zip_file: str, base_name: str) -> None:
         self.deploy_iam_policy(base_name=base_name)
         self.deploy_iam_role(base_name=base_name)
@@ -203,10 +221,12 @@ class AwsDeploy:
         self.ensure_sns_topic(base_name=base_name)
         self.deploy_lambda(zip_file=zip_file, base_name=base_name)
         self.deploy_event_bridge_rule(base_name=base_name)
+        self.attach_event_bridge_target(base_name=base_name)
 
     def delete_everything(self, base_name: str):
         self.delete_lambda(base_name=base_name)
         self.detach_iam_policy(base_name=base_name)
         self.delete_iam_policy(base_name=base_name)
         self.delete_iam_role(base_name=base_name)
+        self.detach_event_bridge_target(base_name=base_name)
         self.delete_event_bridge_rule(base_name=base_name)
