@@ -6,6 +6,7 @@ python_libs= \
 	'boto3-stubs-lite[dynamodb]' \
 	'boto3-stubs-lite[lambda]' \
 	'boto3-stubs-lite[sns]' \
+	'boto3-stubs-lite[iam]' \
 	jsonpath_ng lxml \
 	pyyaml
 
