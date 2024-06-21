@@ -13,8 +13,10 @@ def print_hi(name):
                          endpoint_url='http://localhost:8000',
                          region_name='us-west-2')
     p = probe_state_repo.ProbeStateRepo(ddb)
-    p.update_probe_with_success('foo', str(1.33))
-    p.update_probe_with_success('bar', str(22.42))
+    #p.update_probe_with_success('foo', str(1.33))
+    #p.update_probe_with_success('bar', str(22.42))
+    p.update_probe_with_failure('zoo', 'boom!')
+    #p.update_probe_with_success('zoo', str(5))
 
     p.dump()
 

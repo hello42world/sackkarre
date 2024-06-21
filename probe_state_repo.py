@@ -25,6 +25,30 @@ class ProbeStateRepo:
             }
         )
 
+    def update_probe_with_failure(self,
+                                  probe_name: str,
+                                  error_msg: str):
+        ps_tbl = self.db.Table(self.PROBE_STATE_TABLE)
+        ps_tbl.update_item(
+            Key={
+                'probe_name': probe_name,
+            },
+            UpdateExpression="""SET 
+                last_error = :last_error, 
+                #value=if_not_exists(#value, :empty_str), 
+                last_updated = :last_updated, num_errors=if_not_exists(num_errors, :zero) + :inc""",
+            ExpressionAttributeValues={
+                ':last_error': error_msg,
+                ':last_updated': self._utc_now(),
+                ':empty_str': '',
+                ':inc': 1,
+                ':zero': 0,
+            },
+            ExpressionAttributeNames={
+                '#value': 'value'
+            }
+        )
+
     def get_probe_state(self, probe_name: str) -> ProbeState:
         pass
 
