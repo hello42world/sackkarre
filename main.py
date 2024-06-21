@@ -135,6 +135,13 @@ def list_price_probe_state(
     print(tabulate.tabulate(table, headers))
 
 
+def aws_lambda(event, context):
+    probe_list_name = os.environ['PROBE_LIST_NAME']
+    aws_region = os.environ['AWS_REGION']
+    base_name = context.function_name
+    run_price_check(get_db(aws_region), base_name, probe_list_name, get_reporter(base_name, aws_region))
+
+
 def main():
     args = parse_cmd_line()
     if args.cmd == 'set-probe-list':
