@@ -1,13 +1,10 @@
-import sys
 import boto3
 import mypy_boto3_dynamodb as dynamodb
 import argparse
-import probe_io
-import urllib.request
+
 from config_repo import ConfigRepo
-from scanner import Scanner, TargetChangeType
-from probe_state_repo import ProbeStateRepo
-from prober import Prober
+from price_checker import run_price_check
+from change_reporter import StdoutChangeReporter
 
 
 def parse_cmd_line():
@@ -48,35 +45,9 @@ def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
         if s is not None:
             print(s)
         else:
-            print(f'Config key {config_key} does not exist')
+            print(f'Config key {config_key} not found')
     else:
         print("Config table doesn't exist.s")
-
-
-def get_url(url: str) -> str:
-    with urllib.request.urlopen(url) as file:
-        return file.read()
-
-
-def run(db: dynamodb.ServiceResource, config_key: str) -> None:
-    cr = ConfigRepo(db=db)
-    probe_spec_str = cr.find_value(config_key)
-    if probe_spec_str is None:
-        raise Exception(f'Config key {config_key} does not exist')
-    probes = probe_io.load_from_str(probe_spec_str)
-    probe_state_repo = ProbeStateRepo(db)
-    probe_state_repo.ensure_schema()
-    prober = Prober(get_url)
-    scanner = Scanner(probe_state_repo, prober)
-    changes = scanner.scan(probes)
-    for c in changes:
-        if c.change_type == TargetChangeType.VALUE_CHANGED:
-            print(f'Price changed: {c.probe.probe_name} was {c.old_value} now {c.new_value}')
-            print(f'  See: {c.probe.target_url}')
-        elif c.change_type == TargetChangeType.MAX_ERRORS_REACHED:
-            print(f'Something is wrong with: {c.probe.probe_name}. Last error: {c.error_msg} ')
-            print(f'  See: {c.probe.target_url}')
-
 
 
 def main():
@@ -86,7 +57,7 @@ def main():
     elif args.cmd == 'dump':
         dump_probe_spec(get_db(), args.probe_key)
     elif args.cmd == 'run':
-        run(get_db(), args.probe_key)
+        run_price_check(get_db(), args.probe_key, StdoutChangeReporter())
 
 
 if __name__ == '__main__':
