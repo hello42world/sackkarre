@@ -12,10 +12,12 @@ class TargetChangeType(Enum):
 
 class TargetChange:
     def __init__(self,
+                 probe: Probe,
                  change_type: TargetChangeType,
                  old_value: str = '',
                  new_value: str = '',
                  error_msg: str = ''):
+        self.probe = probe
         self.change_type = change_type
         self.old_value = old_value
         self.new_value = new_value
@@ -56,12 +58,14 @@ class Scanner:
                 if pr.is_error:
                     if ps.num_errors == self.MAX_ERRORS - 1:
                         change = TargetChange(
+                            probe=probe,
                             change_type=TargetChangeType.MAX_ERRORS_REACHED,
                             error_msg=pr.error_msg)
                     self.probe_state_repo.update_state_with_failure(probe.probe_name, pr.error_msg)
                 else:
                     if pr.value != ps.value:
                         change = TargetChange(
+                            probe=probe,
                             change_type=TargetChangeType.VALUE_CHANGED,
                             old_value=ps.value,
                             new_value=pr.value)

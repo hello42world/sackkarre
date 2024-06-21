@@ -40,7 +40,7 @@ class Prober(IProber):
                 data = self._step_jpath(data, s.expr)
             else:
                 raise Exception("Unknown step type")
-        return data
+        return str(data)
 
     def _step_xpath(self, data: str, xpath: str) -> str:
         parser = etree.HTMLParser()

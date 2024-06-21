@@ -55,7 +55,7 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
         ps_tbl.put_item(
             Item={
                 'probe_name': probe_name,
-                'value': probe_value,
+                'value': str(probe_value),
                 'num_errors': 0,
                 'last_error': '',
                 'last_updated': self._utc_now()
