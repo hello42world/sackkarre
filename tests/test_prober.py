@@ -1,12 +1,15 @@
 import unittest
-from prober import Prober
+import asyncio
+from prober import Prober, IPageLoader
 import probe_io
 import os
 
 
-def _get_html_fixture(name: str) -> str:
-    with open(os.path.dirname(os.path.abspath(__file__)) + f'/fixtures/{name}.html', 'r') as file:
-        return file.read()
+class FilePageLoader(IPageLoader):
+    async def load_page(self, url: str) -> str:
+        with open(os.path.dirname(os.path.abspath(__file__)) + f'/fixtures/{url}.html', 'r') as file:
+            return file.read()
+
 
 
 class TestProber(unittest.TestCase):
@@ -29,8 +32,8 @@ probes:
       - *lidl_jpath
 '''
         p = probe_io.load_from_str(probe_str)
-        prober = Prober(_get_html_fixture)
-        probe_result = prober.do_probe(p[0])
+        prober = Prober(FilePageLoader())
+        probe_result = asyncio.run(prober.do_probe(p[0]))
         self.assertFalse(probe_result.is_error)
         self.assertEqual(139.00, float(probe_result.value))
 
@@ -49,8 +52,8 @@ probes:
       - *lidl_xpath
 '''
         p = probe_io.load_from_str(probe_str)
-        prober = Prober(_get_html_fixture)
-        probe_result = prober.do_probe(p[0])
+        prober = Prober(FilePageLoader())
+        probe_result = asyncio.run(prober.do_probe(p[0]))
         self.assertTrue(probe_result.is_error)
         self.assertTrue(len(probe_result.error_msg) > 0)
 

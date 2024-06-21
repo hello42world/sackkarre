@@ -1,17 +1,20 @@
 import mypy_boto3_dynamodb as dynamodb
-import urllib.request
+from aiohttp import ClientSession
 
 from scanner import Scanner
 from probe_state_repo import ProbeStateRepo
-from prober import Prober
+from prober import Prober, IPageLoader
 import probe_io
 from config_repo import ConfigRepo
 from change_reporter import IChangeReporter
 
 
-def get_url(url: str) -> str:
-    with urllib.request.urlopen(url) as file:
-        return file.read()
+class AioHttpPageLoader(IPageLoader):
+    async def load_page(self, url: str) -> str:
+        async with ClientSession(max_field_size=16384) as session:
+            async with session.get(url) as response:
+                buf = await response.read()
+                return buf.decode('utf-8')
 
 
 
@@ -27,9 +30,8 @@ def run_price_check(
     probes = probe_io.load_from_str(probe_spec_str)
     probe_state_repo = ProbeStateRepo(db, base_name)
     probe_state_repo.ensure_schema()
-    prober = Prober(get_url)
+    prober = Prober(AioHttpPageLoader())
     scanner = Scanner(probe_state_repo, prober)
     changes = scanner.scan(probes)
     if len(changes) > 0:
         change_reporter.report_state_changes(changes)
-

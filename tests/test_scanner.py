@@ -1,3 +1,4 @@
+import asyncio
 import unittest
 from typing import Optional
 
@@ -15,7 +16,7 @@ class FakeProber(IProber):
     def __init__(self, res: ProbeResult):
         self.res = res
 
-    def do_probe(self, p: Probe) -> probe_result.ProbeResult:
+    async def do_probe(self, p: Probe) -> probe_result.ProbeResult:
         return self.res
 
 
@@ -40,8 +41,7 @@ class TestProber(unittest.TestCase):
         state_repo = FakeProbeStateRepo()
         probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
-        scanner = Scanner(state_repo, prober)
-        target_event = scanner.check_probe(probe)
+        target_event = asyncio.run(Scanner(state_repo, prober).check_probe(probe))
         self.assertTrue(state_repo.success_called)
         self.assertFalse(state_repo.failure_called)
         self.assertIsNone(target_event)
@@ -50,7 +50,7 @@ class TestProber(unittest.TestCase):
         state_repo = FakeProbeStateRepo()
         probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, is_error=True, error_msg='boom'))
-        target_event = Scanner(state_repo, prober).check_probe(probe)
+        target_event = asyncio.run(Scanner(state_repo, prober).check_probe(probe))
         self.assertFalse(state_repo.success_called)
         self.assertTrue(state_repo.failure_called)
         self.assertIsNone(target_event)
@@ -59,7 +59,7 @@ class TestProber(unittest.TestCase):
         state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', value='43'))
         probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
-        target_event = Scanner(state_repo, prober).check_probe(probe)
+        target_event = asyncio.run(Scanner(state_repo, prober).check_probe(probe))
         self.assertTrue(state_repo.success_called)
         self.assertFalse(state_repo.failure_called)
         self.assertEqual(TargetChangeType.VALUE_CHANGED, target_event.change_type)
@@ -70,7 +70,7 @@ class TestProber(unittest.TestCase):
         state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', value='42'))
         probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, value='42'))
-        target_event = Scanner(state_repo, prober).check_probe(probe)
+        target_event = asyncio.run(Scanner(state_repo, prober).check_probe(probe))
         self.assertFalse(state_repo.success_called)
         self.assertFalse(state_repo.failure_called)
         self.assertIsNone(target_event)
@@ -79,7 +79,7 @@ class TestProber(unittest.TestCase):
         state_repo = FakeProbeStateRepo(state=ProbeState(probe_id='foo', num_errors=Scanner.MAX_ERRORS - 1))
         probe = Probe('1', 'foo', 'http://foo.foo', [])
         prober = FakeProber(ProbeResult(the_probe=probe, is_error=True, error_msg='boom!'))
-        target_event = Scanner(state_repo, prober).check_probe(probe)
+        target_event = asyncio.run(Scanner(state_repo, prober).check_probe(probe))
         self.assertFalse(state_repo.success_called)
         self.assertTrue(state_repo.failure_called)
         self.assertEqual(TargetChangeType.MAX_ERRORS_REACHED, target_event.change_type)

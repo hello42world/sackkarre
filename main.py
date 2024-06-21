@@ -1,8 +1,10 @@
+import asyncio
 from pprint import pprint
 import boto3
 import mypy_boto3_dynamodb as dynamodb
 import argparse
 import os
+from aiohttp import ClientSession
 
 import tabulate
 

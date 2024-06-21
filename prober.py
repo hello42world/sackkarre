@@ -7,30 +7,36 @@ from lxml import etree
 from abc import abstractmethod
 
 
-class IProber:
-
+class IPageLoader:
     @abstractmethod
-    def do_probe(self, p: probe.Probe) -> probe_result.ProbeResult:
+    async def load_page(self, url: str) -> str:
+        pass
+
+
+class IProber:
+    @abstractmethod
+    async def do_probe(self, p: probe.Probe) -> probe_result.ProbeResult:
         pass
 
 
 class Prober(IProber):
-    def __init__(self,
-                 url_loader: typing.Callable[[str], str]):
-        self.url_loader = url_loader
+    def __init__(
+            self,
+            page_loader: IPageLoader):
+        self.page_loader = page_loader
 
-    def do_probe(self, p: probe.Probe) -> probe_result.ProbeResult:
+    async def do_probe(self, p: probe.Probe) -> probe_result.ProbeResult:
         result = probe_result.ProbeResult(p)
         try:
-            result.value = self._do_probe(p)
+            html_page = await self.page_loader.load_page(p.target_url)
+            result.value = self._do_probe(p, html_page)
         except Exception as exc:
             result.is_error = True
             result.error_msg = str(exc)
         return result
 
-    def _do_probe(self, p: probe.Probe) -> str:
-        # Get the page
-        data = self.url_loader(p.target_url)
+    def _do_probe(self, p: probe.Probe, page_html: str) -> str:
+        data = page_html
         for s in p.steps:
             if s.step_type == probe.ProbeStepType.XPATH:
                 data = self._step_xpath(data, s.expr)
@@ -41,7 +47,7 @@ class Prober(IProber):
         return str(data)
 
     def _step_xpath(self, data: str, xpath: str) -> str:
-        parser =     etree.HTMLParser()
+        parser = etree.HTMLParser()
         doc = etree.fromstring(data, parser)
         res: list = doc.xpath(xpath)
         if len(res) == 0:

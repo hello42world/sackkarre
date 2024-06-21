@@ -7,6 +7,7 @@ python_libs= \
 	'boto3-stubs-lite[lambda]' \
 	'boto3-stubs-lite[sns]' \
 	'boto3-stubs-lite[iam]' \
+	aiohttp \
 	jsonpath_ng lxml \
 	tabulate \
 	pyyaml
