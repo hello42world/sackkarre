@@ -4,7 +4,7 @@ import probe_state_repo
 
 
 class TestProbeStateRepo(unittest.TestCase):
-    def test_1(self):
+    def testRepo(self):
         db = boto3.resource('dynamodb',
                             endpoint_url='http://localhost:8000',
                             region_name='us-east-1')

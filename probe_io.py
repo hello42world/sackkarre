@@ -5,8 +5,11 @@ import yaml
 def load_from_str(probe_str: str) -> list[Probe]:
     probe_data = yaml.safe_load(probe_str)
     result: list[Probe] = []
-    # todo: Id must be unique
+    ids = set()
     for p in probe_data['probes']:
+        if p['id'] in ids:
+            raise Exception(f'Duplicate probe id {p["id"]}')
+        ids.add(p['id'])
         steps: list[ProbeStep] = []
         for step in p['steps']:
             steps.append(ProbeStep(
