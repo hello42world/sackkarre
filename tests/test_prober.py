@@ -31,7 +31,7 @@ probes:
         prober = Prober(_get_html_fixture)
         probe_result = prober.do_probe(p[0])
         self.assertFalse(probe_result.is_error)
-        self.assertEqual(139.00, float(probe_result.result))
+        self.assertEqual(139.00, float(probe_result.value))
 
     def test_lidl_bad_xpath(self):
         probe_str = '''

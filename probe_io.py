@@ -14,7 +14,7 @@ def load_from_str(probe_str: str) -> list[Probe]:
                 expr=step['expr']))
         result.append(Probe(
             name=probe['name'],
-            url=probe['url'],
+            target_url=probe['url'],
             steps=steps
         ))
     return result

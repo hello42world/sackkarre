@@ -1,12 +1,26 @@
 from typing import Optional
-
 from probe_state import ProbeState
 import mypy_boto3_dynamodb as dynamodb
 import datetime
 from dateutil import parser
+from abc import abstractmethod
 
 
-class ProbeStateRepo:
+class IProbeStateRepo:
+    @abstractmethod
+    def find_state(self, probe_name: str) -> Optional[ProbeState]:
+        pass
+
+    @abstractmethod
+    def update_state_with_success(self, probe_name: str, probe_value: str) -> None:
+        pass
+
+    @abstractmethod
+    def update_state_with_failure(self, probe_name: str, error_msg: str) -> None:
+        pass
+
+
+class ProbeStateRepo(IProbeStateRepo):
     PROBE_STATE_TABLE_DEFAULT = 'probe_state'
 
     def __init__(self,
@@ -36,9 +50,7 @@ class ProbeStateRepo:
             last_updated=parser.parse(item['last_updated'])
         )
 
-    def update_state_with_success(self,
-                                  probe_name: str,
-                                  probe_value: str):
+    def update_state_with_success(self, probe_name: str, probe_value: str) -> None:
         ps_tbl = self.db.Table(self.table_name)
         ps_tbl.put_item(
             Item={
@@ -50,9 +62,7 @@ class ProbeStateRepo:
             }
         )
 
-    def update_state_with_failure(self,
-                                  probe_name: str,
-                                  error_msg: str):
+    def update_state_with_failure(self, probe_name: str, error_msg: str) -> None:
         ps_tbl = self.db.Table(self.table_name)
         ps_tbl.update_item(
             Key={
@@ -74,7 +84,7 @@ class ProbeStateRepo:
             }
         )
 
-    def ensure_schema(self):
+    def ensure_schema(self) -> None:
         if self.table_exists(self.table_name):
             return
 
@@ -106,13 +116,13 @@ class ProbeStateRepo:
             pass
         return exists
 
-    def kill_schema(self):
+    def kill_schema(self) -> None:
         if self.table_exists(self.table_name):
             ps_tbl = self.db.Table(self.table_name)
             ps_tbl.delete()
             ps_tbl.wait_until_not_exists()
 
-    def dump(self):
+    def dump(self) -> None:
         for i in self.db.Table(self.table_name).scan()['Items']:
             print(str(i))
 
