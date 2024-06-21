@@ -42,33 +42,33 @@ class Scanner:
         return res
 
     def check_probe(self, probe: Probe) -> Optional[TargetChange]:
-        ps = self.probe_state_repo.find_state(probe.probe_id)
+        cur_state = self.probe_state_repo.find_state(probe.probe_id)
         change = None
-        if ps is None:
-            pr = self.prober.do_probe(probe)
-            if pr.is_error:
-                self.probe_state_repo.update_state_with_failure(probe.probe_id, pr.error_msg)
+        if cur_state is None:
+            probe_result = self.prober.do_probe(probe)
+            if probe_result.is_error:
+                self.probe_state_repo.update_state_with_failure(probe.probe_id, probe_result.error_msg)
             else:
-                self.probe_state_repo.update_state_with_success(probe.probe_id, pr.value)
+                self.probe_state_repo.update_state_with_success(probe.probe_id, probe_result.value)
         else:
-            if ps.num_errors >= self.MAX_ERRORS:
+            if cur_state.num_errors >= self.MAX_ERRORS:
                 pass
             else:
-                pr = self.prober.do_probe(probe)
-                if pr.is_error:
-                    if ps.num_errors == self.MAX_ERRORS - 1:
+                probe_result = self.prober.do_probe(probe)
+                if probe_result.is_error:
+                    if cur_state.num_errors == self.MAX_ERRORS - 1:
                         change = TargetChange(
                             probe=probe,
                             change_type=TargetChangeType.MAX_ERRORS_REACHED,
-                            error_msg=pr.error_msg)
-                    self.probe_state_repo.update_state_with_failure(probe.probe_id, pr.error_msg)
+                            error_msg=probe_result.error_msg)
+                    self.probe_state_repo.update_state_with_failure(probe.probe_id, probe_result.error_msg)
                 else:
-                    if pr.value != ps.value:
+                    if probe_result.value != cur_state.value:
                         change = TargetChange(
                             probe=probe,
                             change_type=TargetChangeType.VALUE_CHANGED,
-                            old_value=ps.value,
-                            new_value=pr.value)
-                        self.probe_state_repo.update_state_with_success(probe.probe_id, pr.value)
+                            old_value=cur_state.value,
+                            new_value=probe_result.value)
+                        self.probe_state_repo.update_state_with_success(probe.probe_id, probe_result.value, cur_state.value)
 
         return change

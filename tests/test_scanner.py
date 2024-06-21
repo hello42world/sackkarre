@@ -28,7 +28,7 @@ class FakeProbeStateRepo(IProbeStateRepo):
     def find_state(self, probe_id: str) -> Optional[ProbeState]:
         return self.state
 
-    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str, old_value: str = '') -> None:
         self.success_called = True
 
     def update_state_with_failure(self, probe_id: str, error_msg: str) -> None:

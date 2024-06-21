@@ -13,7 +13,7 @@ class IProbeStateRepo:
         pass
 
     @abstractmethod
-    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str, old_value: str = '') -> None:
         pass
 
     @abstractmethod
@@ -43,17 +43,19 @@ class ProbeStateRepo(IProbeStateRepo, BaseRepo):
         return ProbeState(
             probe_id=item['probe_id'],
             value=item['value'],
+            old_value=item.get('old_value', ''),
             num_errors=item['num_errors'],
             last_error=item['last_error'],
             last_updated=parser.parse(item['last_updated'])
         )
 
-    def update_state_with_success(self, probe_id: str, probe_value: str) -> None:
+    def update_state_with_success(self, probe_id: str, probe_value: str, old_value: str = '') -> None:
         ps_tbl = self.db.Table(self.table_name)
         ps_tbl.put_item(
             Item={
                 'probe_id': probe_id,
-                'value': str(probe_value),
+                'value': probe_value,
+                'old_value': old_value,
                 'num_errors': 0,
                 'last_error': '',
                 'last_updated': self._utc_now()
