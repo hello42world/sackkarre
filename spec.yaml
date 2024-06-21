@@ -1,0 +1,14 @@
+step_templates:
+  lidl_xpath: &lidl_xpath
+    step_type: XPATH
+    expr: "//script[@data-hid='json_data_product']"
+  lidl_jpath: &lidl_jpath
+    step_type: JPATH
+    expr: "$.offers[0].price"
+
+probes:
+  - name: Plasma cutter
+    url: 'https://www.lidl.de/p/parkside-plasmaschneider-pps-40-b3-4-4-5-bar/p100342928'
+    steps:
+      - *lidl_xpath
+      - *lidl_jpath
