@@ -74,7 +74,8 @@ def deploy_to_aws(aws_region: str, base_name: str) -> None:
     zip_file = '.build/sackkarre.zip'
     if not os.path.isfile(zip_file):
         raise Exception(f'AWS lambda zip file {zip_file} not found. Run make lambda-build.')
-    aws_deploy.deploy_everything(zip_file, aws_region, base_name)
+    ad = aws_deploy.AwsDeploy(aws_region=aws_region)
+    ad.deploy_everything(zip_file, base_name)
 
 
 def get_reporter(base_name: str, aws_region: str) -> change_reporter.IChangeReporter:
