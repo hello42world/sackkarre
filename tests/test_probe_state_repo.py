@@ -6,7 +6,8 @@ import probe_state_repo
 class TestProbeStateRepo(unittest.TestCase):
     def test_1(self):
         db = boto3.resource('dynamodb',
-                            endpoint_url='http://localhost:8000')
+                            endpoint_url='http://localhost:8000',
+                            region_name='us-east-1')
         repo = probe_state_repo.ProbeStateRepo(db, 'test_psr', True)
         repo.kill_schema()
         repo.ensure_schema()

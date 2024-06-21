@@ -9,7 +9,21 @@ step_templates:
 probes:
   - name: Battery 4ah
     url: 'https://www.lidl.de/p/parkside-20-v-akku-pap-20-b3-4-ah/p100367574'
-#    url: 'https://www.lidl.de/p/parkside-performance-20-v-smart-akku-paps-204-a1-4-ah/p100368821'
+    steps:
+      - *lidl_xpath
+      - *lidl_jpath
+  - name: Socket set 1/2 24pc.
+    url: 'https://www.lidl.de/p/parkside-stecknuss-satz-24-teilig-in-stabiler-metallbox/p100361532'
+    steps:
+      - *lidl_xpath
+      - *lidl_jpath
+  - name: Drill brushless (1)
+    url: 'https://www.lidl.de/p/parkside-performance-20-v-akku-bohrschrauber-pabsp-20-li-c3-ohne-akku-und-ladegeraet/p100357900'
+    steps:
+      - *lidl_xpath
+      - *lidl_jpath
+  - name: Drill brushless (2)
+    url: 'https://www.lidl.de/p/parkside-performance-20-v-akku-bohrschrauber-pabsp-20-li-c3-ohne-akku-und-ladegeraet/p100368895'
     steps:
       - *lidl_xpath
       - *lidl_jpath

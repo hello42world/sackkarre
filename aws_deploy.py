@@ -32,6 +32,12 @@ def deploy_lambda(zip_file: str, aws_region: str, base_name: str) -> None:
         PackageType='Zip',
         Architectures=['x86_64'],
         Publish=True,
+        Timeout=60,
+        Environment={
+            'Variables': {
+                'PROBE_KEY': 'test1'
+            }
+        }
     )
     waiter = lambda_client.get_waiter('function_updated')
     waiter.wait(FunctionName=function_name)

@@ -10,7 +10,7 @@ import change_reporter
 import aws_deploy
 
 
-def check_required_args(args) -> None :
+def check_required_args(args) -> None:
     req_args = {
         'run': ['probe-key'],
         'save': ['probe-key', 'probe-file'],
@@ -77,10 +77,20 @@ def deploy_to_aws(aws_region: str, base_name: str) -> None:
     aws_deploy.deploy_everything(zip_file, aws_region, base_name)
 
 
+def get_reporter(base_name: str, aws_region: str) -> change_reporter.IChangeReporter:
+    sns_reporter = change_reporter.AwsSnsChangeReported(
+        topic_name=base_name,
+        aws_region=aws_region)
+    stdout_reporter = change_reporter.StdoutChangeReporter()
+    reporter = change_reporter.MulticastReporter([sns_reporter, stdout_reporter])
+    return reporter
+
+
 def aws_lambda(event, context):
-    print(f'Hello AWS.')
-    pprint(event)
-    pprint(context)
+    probe_key = os.environ['PROBE_KEY']
+    aws_region = os.environ['AWS_REGION']
+    base_name = context.function_name
+    run_price_check(get_db(aws_region), probe_key, get_reporter(base_name, aws_region))
 
 
 def main():
@@ -90,12 +100,7 @@ def main():
     elif args.cmd == 'dump':
         dump_probe_spec(get_db(args.aws_region), args.probe_key)
     elif args.cmd == 'run':
-        sns_reporter = change_reporter.AwsSnsChangeReported(
-            topic_name=args.aws_base_name,
-            aws_region=args.aws_region)
-        stdout_reporter = change_reporter.StdoutChangeReporter()
-        reporter = change_reporter.MulticastReporter([sns_reporter, stdout_reporter])
-        run_price_check(get_db(args.aws_region), args.probe_key, reporter)
+        run_price_check(get_db(args.aws_region), args.probe_key, get_reporter(args.aws_base_name, args.aws_region))
     elif args.cmd == 'aws-deploy':
         deploy_to_aws(args.aws_region, args.aws_base_name)
 

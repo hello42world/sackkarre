@@ -1,4 +1,5 @@
 import mypy_boto3_dynamodb as dynamodb
+import boto3
 
 
 class BaseRepo:
