@@ -4,6 +4,7 @@ import mypy_boto3_dynamodb as dynamodb
 import datetime
 from dateutil import parser
 from abc import abstractmethod
+from base_repo import BaseRepo
 
 
 class IProbeStateRepo:
@@ -20,15 +21,14 @@ class IProbeStateRepo:
         pass
 
 
-class ProbeStateRepo(IProbeStateRepo):
+class ProbeStateRepo(IProbeStateRepo, BaseRepo):
     PROBE_STATE_TABLE_DEFAULT = 'probe_state'
 
     def __init__(self,
                  db: dynamodb.ServiceResource,
                  table_name: str = PROBE_STATE_TABLE_DEFAULT,
                  consistent_read: bool = False):
-        self.db = db
-        self.table_name = table_name
+        BaseRepo.__init__(self, db, table_name)
         self.consistent_read = consistent_read
 
     def find_state(self, probe_name: str) -> Optional[ProbeState]:
@@ -85,7 +85,7 @@ class ProbeStateRepo(IProbeStateRepo):
         )
 
     def ensure_schema(self) -> None:
-        if self.table_exists(self.table_name):
+        if self.schema_exists():
             return
 
         ps_tbl = self.db.create_table(
@@ -105,26 +105,6 @@ class ProbeStateRepo(IProbeStateRepo):
             BillingMode='PAY_PER_REQUEST'
         )
         ps_tbl.wait_until_exists()
-
-    def table_exists(self, table: str) -> bool:
-        exists: bool = False
-        try:
-            tt = self.db.Table(name=table)
-            tt.load()
-            exists = True
-        except:
-            pass
-        return exists
-
-    def kill_schema(self) -> None:
-        if self.table_exists(self.table_name):
-            ps_tbl = self.db.Table(self.table_name)
-            ps_tbl.delete()
-            ps_tbl.wait_until_not_exists()
-
-    def dump(self) -> None:
-        for i in self.db.Table(self.table_name).scan()['Items']:
-            print(str(i))
 
     @staticmethod
     def _utc_now() -> str:

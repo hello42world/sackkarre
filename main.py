@@ -1,31 +1,16 @@
-import boto3
-import probe_state_repo
+import sys
+from config_repo import ConfigRepo
 
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+def main():
+    if len(sys.argv) == 0:
+        raise Exception('app <config_key_name> - key of the config that contains probes yaml')
+    probes_key = sys.argv[1]
+
+    # db = boto3.resource('dynamodb',aws_access_key_id='yyyy', aws_secret_access_key='xxxx', region_name='***')
+    # db = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
+    pass
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-    ddb = boto3.resource('dynamodb',
-                         endpoint_url='http://localhost:8000',
-                         region_name='us-west-2')
-    p = probe_state_repo.ProbeStateRepo(ddb)
-    #p.update_probe_with_success('foo', str(1.33))
-    #p.update_probe_with_success('bar', str(22.42))
-    #p.update_state_with_failure('zoo', 'boom!')
-    p.update_state_with_success('zoo', str(5))
-
-    # p.dump()
-    s = p.find_state('zoo')
-    print(s)
-    # probe_spec.load('spec.yaml')
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main()
