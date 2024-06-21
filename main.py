@@ -123,13 +123,13 @@ def list_price_probe_state(
         raise Exception(f'Config key {probe_list_name} not found')
     probes = probe_io.load_from_str(probe_spec_str)
     state_repo = probe_state_repo.ProbeStateRepo(db, base_name)
-    headers = ['ID', 'NAME', 'VALUE', 'IS_ERR', 'LAST_UPD', 'URL']
+    headers = ['ID', 'NAME', 'VALUE', 'OLD_VALUE', 'IS_ERR', 'LAST_UPD', 'URL']
     table = []
     for probe in probes:
         row = [probe.probe_id, probe.probe_name]
         state = state_repo.find_state(probe.probe_id)
         if state is not None:
-            row.extend((state.value, state.has_error, state.last_updated.strftime("%Y-%m-%d, %H:%M:%S")))
+            row.extend((state.value, state.old_value, state.has_error, state.last_updated.strftime("%Y-%m-%d, %H:%M:%S")))
         else:
             row.extend(('', '', ''))
         row.append(probe.target_url)
