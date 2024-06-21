@@ -17,14 +17,15 @@ def get_url(url: str) -> str:
 
 def run_price_check(
         db: dynamodb.ServiceResource,
+        base_name: str,
         config_key: str,
         change_reporter: IChangeReporter) -> None:
-    cr = ConfigRepo(db=db)
+    cr = ConfigRepo(db, base_name)
     probe_spec_str = cr.find_value(config_key)
     if probe_spec_str is None:
         raise Exception(f'Config key {config_key} not found')
     probes = probe_io.load_from_str(probe_spec_str)
-    probe_state_repo = ProbeStateRepo(db)
+    probe_state_repo = ProbeStateRepo(db, base_name)
     probe_state_repo.ensure_schema()
     prober = Prober(get_url)
     scanner = Scanner(probe_state_repo, prober)

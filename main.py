@@ -4,6 +4,7 @@ import mypy_boto3_dynamodb as dynamodb
 import argparse
 import os
 
+import probe_io
 from config_repo import ConfigRepo
 from price_checker import run_price_check
 import change_reporter
@@ -12,10 +13,11 @@ import aws_deploy
 
 def check_required_args(args) -> None:
     req_args = {
-        'run': ['probe-key'],
-        'save': ['probe-key', 'probe-file'],
-        'dump': ['probe-key'],
-        'aws-deploy': ['aws-base-name']
+        'run': ['probe-list-name'],
+        'set-probe-list': ['probe-list-name', 'probe-list-file'],
+        'get-probe-list': ['probe-list-name'],
+        'aws-deploy': ['base-name'],
+        'aws-delete': ['base-name'],
     }
     cmd = args.cmd
     if cmd in req_args:
@@ -27,16 +29,23 @@ def check_required_args(args) -> None:
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(
-        description='Watches marketplace pages and waits for discounts')
+        description='Watches marketplace pages and waits for changes in price')
 
     parser.add_argument('cmd',
-                        choices=['run', 'save', 'dump', 'aws-deploy'])
-    parser.add_argument('-k', '--probe-key',
-                        help='Name of the config key containing the probe spec')
-    parser.add_argument('-f', '--probe-file',
-                        help='Path to the probe spec file')
-    parser.add_argument('-n', '--aws-base-name', default='sackkarre',
-                        help='Base name for naming objects in AWS when deploying')
+                        choices=['run', 'set-probe-list', 'get-probe-list', 'aws-deploy', 'aws-delete'],
+                        help='''
+run - Run the price checker |
+set-probe-list - Save probe list file to the config |
+get-probe-list - Load probe list from the config |
+aws-deploy - Deploy the lambda and IAM policy/role to AWS () |
+aws-delete - Delete the lambda and IAM policy/role from AWS (leaves the data in dynamodb)
+                        ''')
+    parser.add_argument('-n', '--probe-list-name', default='default_probe_list',
+                        help='Name of the config value containing the probe list')
+    parser.add_argument('-f', '--probe-list-file',
+                        help='Path to the probe list file')
+    parser.add_argument('-b', '--base-name', default='sackkarre',
+                        help='Base name (prefix) for naming objects in AWS when deploying')
     parser.add_argument('-r', '--aws-region', default='us-east-1',
                         help='AWS region')
     args = parser.parse_args()
@@ -50,16 +59,18 @@ def get_db(region: str) -> dynamodb.ServiceResource:
     return db
 
 
-def save_probe_spec(db: dynamodb.ServiceResource, probe_file: str, config_key: str) -> None:
-    with open(probe_file, 'r') as file:
+def save_probe_spec(db: dynamodb.ServiceResource, base_name: str, probe_list_file: str, config_key: str) -> None:
+    with open(probe_list_file, 'r') as file:
         probe_str = file.read()
-    cr = ConfigRepo(db=db)
+    # This will do a syntax check.
+    probe_io.load_from_str(probe_str)
+    cr = ConfigRepo(db=db, base_name=base_name)
     cr.ensure_schema()
     cr.put_value(key=config_key, value=probe_str)
 
 
-def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
-    cr = ConfigRepo(db=db)
+def dump_probe_spec(db: dynamodb.ServiceResource, base_name: str, config_key: str) -> None:
+    cr = ConfigRepo(db=db, base_name=base_name)
     if cr.schema_exists():
         s = cr.find_value(key=config_key)
         if s is not None:
@@ -78,6 +89,11 @@ def deploy_to_aws(aws_region: str, base_name: str) -> None:
     ad.deploy_everything(zip_file, base_name)
 
 
+def delete_from_aws(aws_region: str, base_name: str) -> None:
+    ad = aws_deploy.AwsDeploy(aws_region=aws_region)
+    ad.delete_everything(base_name)
+
+
 def get_reporter(base_name: str, aws_region: str) -> change_reporter.IChangeReporter:
     sns_reporter = change_reporter.AwsSnsChangeReported(
         topic_name=base_name,
@@ -88,22 +104,30 @@ def get_reporter(base_name: str, aws_region: str) -> change_reporter.IChangeRepo
 
 
 def aws_lambda(event, context):
-    probe_key = os.environ['PROBE_KEY']
+    probe_list_name = os.environ['PROBE_LIST_NAME']
     aws_region = os.environ['AWS_REGION']
     base_name = context.function_name
-    run_price_check(get_db(aws_region), probe_key, get_reporter(base_name, aws_region))
+    run_price_check(get_db(aws_region), base_name, probe_list_name, get_reporter(base_name, aws_region))
 
 
 def main():
     args = parse_cmd_line()
-    if args.cmd == 'save':
-        save_probe_spec(get_db(args.aws_region), args.probe_file, args.probe_key)
-    elif args.cmd == 'dump':
-        dump_probe_spec(get_db(args.aws_region), args.probe_key)
+    if args.cmd == 'set-probe-list':
+        save_probe_spec(get_db(args.aws_region), args.base_name, args.probe_list_file, args.probe_list_name)
+    elif args.cmd == 'get-probe-list':
+        dump_probe_spec(get_db(args.aws_region), args.base_name, args.probe_list_name)
     elif args.cmd == 'run':
-        run_price_check(get_db(args.aws_region), args.probe_key, get_reporter(args.aws_base_name, args.aws_region))
+        run_price_check(
+            get_db(args.aws_region),
+            args.base_name,
+            args.probe_list_name,
+            get_reporter(args.base_name, args.aws_region))
     elif args.cmd == 'aws-deploy':
-        deploy_to_aws(args.aws_region, args.aws_base_name)
+        deploy_to_aws(args.aws_region, args.base_name)
+    elif args.cmd == 'aws-delete':
+        delete_from_aws(args.aws_region, args.base_name)
+    else:
+        raise Exception(f'Unknown command - {args.cmd}')
 
 
 if __name__ == '__main__':

@@ -22,13 +22,11 @@ class IProbeStateRepo:
 
 
 class ProbeStateRepo(IProbeStateRepo, BaseRepo):
-    PROBE_STATE_TABLE_DEFAULT = 'sackkarre_probe_state'
-
     def __init__(self,
                  db: dynamodb.ServiceResource,
-                 table_name: str = PROBE_STATE_TABLE_DEFAULT,
+                 base_name: str,
                  consistent_read: bool = False):
-        BaseRepo.__init__(self, db, table_name)
+        BaseRepo.__init__(self, db, base_name + '_probe_state')
         self.consistent_read = consistent_read
 
     def find_state(self, probe_id: str) -> Optional[ProbeState]:

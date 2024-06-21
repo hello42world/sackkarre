@@ -15,12 +15,11 @@ class IConfigRepo:
 
 
 class ConfigRepo(IConfigRepo, BaseRepo):
-    CONFIG_TABLE_DEFAULT = 'sackkarre_config'
 
     def __init__(self,
                  db: dynamodb.ServiceResource,
-                 table_name: str = CONFIG_TABLE_DEFAULT):
-        BaseRepo.__init__(self, db, table_name)
+                 base_name: str):
+        BaseRepo.__init__(self, db, base_name + '_config')
         self.tbl = self.db.Table(self.table_name)
 
     def find_value(self, key: str) -> Optional[str]:

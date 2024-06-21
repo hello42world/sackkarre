@@ -1,5 +1,6 @@
 from pprint import pprint
 import boto3
+import botocore.client
 import mypy_boto3_lambda as aws_lambda
 import mypy_boto3_iam as aws_iam
 import json
@@ -9,7 +10,10 @@ import aws
 
 class AwsDeploy:
     def __init__(self, aws_region: str):
-        self.lambda_client: aws_lambda.LambdaClient = boto3.client('lambda', region_name=aws_region)
+        self.lambda_client: aws_lambda.LambdaClient = boto3.client(
+            'lambda',
+            region_name=aws_region)
+        self.aws_region = aws_region
         self.iam_client: aws_iam.ServiceResource = boto3.resource("iam")
 
     def delete_lambda(self, base_name: str) -> None:
@@ -24,7 +28,12 @@ class AwsDeploy:
 
     def deploy_lambda(self, zip_file: str, base_name: str) -> None:
         function_name = base_name
-        self.lambda_client.create_function(
+        # Need a lot of timeout.
+        lambda_client: aws_lambda.LambdaClient = boto3.client(
+            'lambda',
+            region_name=self.aws_region,
+            config=botocore.client.Config(read_timeout=600, connect_timeout=600))
+        lambda_client.create_function(
             FunctionName=function_name,
             Runtime='python3.12',
             Role=f'arn:aws:iam::{aws.account_id()}:role/{base_name}',
@@ -39,7 +48,7 @@ class AwsDeploy:
             Timeout=60,
             Environment={
                 'Variables': {
-                    'PROBE_KEY': 'test1'
+                    'PROBE_LIST_NAME': 'default_probe_list',
                 }
             }
         )
@@ -152,17 +161,22 @@ class AwsDeploy:
 
     def delete_iam_policy(self, base_name: str) -> None:
         try:
-            self.iam_client.Policy(f'arn:aws:iam::{aws.account_id()}:policy/{base_name}').delete()
+            policy = self.iam_client.Policy(f'arn:aws:iam::{aws.account_id()}:policy/{base_name}')
+            for pv in policy.versions.all():
+                if not pv.is_default_version:
+                    pv.delete()
+            policy.delete()
         except self.iam_client.meta.client.exceptions.NoSuchEntityException:
             pass
 
     def deploy_everything(self, zip_file: str, base_name: str) -> None:
-        self.delete_lambda(base_name=base_name)
-        self.detach_iam_policy(base_name=base_name)
-        self.delete_iam_policy(base_name=base_name)
-        self.delete_iam_role(base_name=base_name)
-
         self.deploy_iam_policy(base_name=base_name)
         self.deploy_iam_role(base_name=base_name)
         self.attach_iam_policy(base_name=base_name)
         self.deploy_lambda(zip_file=zip_file, base_name=base_name)
+
+    def delete_everything(self, base_name: str):
+        self.delete_lambda(base_name=base_name)
+        self.detach_iam_policy(base_name=base_name)
+        self.delete_iam_policy(base_name=base_name)
+        self.delete_iam_role(base_name=base_name)

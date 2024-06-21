@@ -1,0 +1,26 @@
+step_templates:
+  lidl_xpath: &lidl_xpath
+    step_type: XPATH
+    expr: "//script[@data-hid='json_data_product']"
+  lidl_jpath: &lidl_jpath
+    step_type: JPATH
+    expr: "$.offers[0].price"
+  lidl_steps: &lidl_steps
+    - *lidl_xpath
+    - *lidl_jpath
+
+
+probes:
+    # Any unique string
+  - id: "lidl.battery-01"
+    # Human readable description
+    name: Battery 4ah
+    # Item page URL
+    url: 'https://www.lidl.de/p/parkside-20-v-akku-pap-20-b3-4-ah/p100367574'
+    # Steps needed to extract the price
+    steps: *lidl_steps
+
+  - id: "lidl.battery-02"
+    name: Battery 8ah (smart)
+    url: 'https://www.lidl.de/p/parkside-performance-20-v-smart-akku-paps-208-a1-8-ah/p100363190'
+    steps: *lidl_steps
