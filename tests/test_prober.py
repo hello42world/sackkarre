@@ -35,17 +35,17 @@ probes:
 
     def test_lidl_bad_xpath(self):
         probe_str = '''
-        step_templates:
-          lidl_xpath: &lidl_xpath
-            step_type: XPATH
-            expr: "//script[@data-hid='foobar']"
+step_templates:
+  lidl_xpath: &lidl_xpath
+    step_type: XPATH
+    expr: "//script[@data-hid='foobar']"
 
-        probes:
-          - name: TestThing
-            url: 'lidl_1'
-            steps:
-              - *lidl_xpath
-        '''
+probes:
+  - name: TestThing
+    url: 'lidl_1'
+    steps:
+      - *lidl_xpath
+'''
         p = probe_io.load_from_str(probe_str)
         prober = Prober(_get_html_fixture)
         probe_result = prober.do_probe(p[0])

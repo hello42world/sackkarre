@@ -1,9 +1,9 @@
-import probe
+from probe import Probe
 
 
 class ProbeResult:
     def __init__(self,
-                 the_probe: probe.Probe,
+                 the_probe: Probe,
                  result: str = '',
                  is_error: bool = False,
                  error_msg: str = ''):
