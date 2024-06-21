@@ -6,8 +6,9 @@ import os
 
 from config_repo import ConfigRepo
 from price_checker import run_price_check
-from change_reporter import StdoutChangeReporter
-import aws
+import change_reporter
+import aws_deploy
+
 
 # todo: check required args function needed here
 
@@ -65,7 +66,7 @@ def deploy_to_aws(aws_region: str) -> None:
     zip_file = '.build/sackkarre.zip'
     if not os.path.isfile(zip_file):
         raise Exception(f'AWS lambda zip file {zip_file} not found. Run make lambda-build.')
-    aws.deploy_lambda(zip_file, aws_region)
+    aws_deploy.deploy_lambda(zip_file, aws_region)
 
 
 def aws_lambda(event, context):
@@ -81,7 +82,9 @@ def main():
     elif args.cmd == 'dump':
         dump_probe_spec(get_db(args.aws_region), args.probe_key)
     elif args.cmd == 'run':
-        run_price_check(get_db(args.aws_region), args.probe_key, StdoutChangeReporter())
+        reporter = change_reporter.AwsSnsChangeReported(topic_name='sackkarre', aws_region=args.aws_region)
+        # reporter = change_reporter.StdoutChangeReporter()
+        run_price_check(get_db(args.aws_region), args.probe_key, reporter)
     elif args.cmd == 'aws-deploy':
         deploy_to_aws(args.aws_region)
 

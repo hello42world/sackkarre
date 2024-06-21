@@ -29,5 +29,6 @@ def run_price_check(
     prober = Prober(get_url)
     scanner = Scanner(probe_state_repo, prober)
     changes = scanner.scan(probes)
-    change_reporter.report_state_changes(changes)
+    if len(changes) > 0:
+        change_reporter.report_state_changes(changes)
 

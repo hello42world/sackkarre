@@ -7,8 +7,9 @@ step_templates:
     expr: "$.offers[0].price"
 
 probes:
-  - name: Plasma cutter
-    url: 'https://www.lidl.de/p/parkside-plasmaschneider-pps-40-b3-4-4-5-bar/p100342928'
+  - name: Battery 4ah
+    url: 'https://www.lidl.de/p/parkside-20-v-akku-pap-20-b3-4-ah/p100367574'
+#    url: 'https://www.lidl.de/p/parkside-performance-20-v-smart-akku-paps-204-a1-4-ah/p100368821'
     steps:
       - *lidl_xpath
       - *lidl_jpath

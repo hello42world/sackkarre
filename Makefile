@@ -1,9 +1,14 @@
 
 python_libs= \
-	boto3 'boto3-stubs-lite[dynamodb]' 'boto3-stubs-lite[lambda]' jsonpath_ng lxml pyyaml
+	boto3 \
+	'boto3-stubs-lite[dynamodb]' \
+	'boto3-stubs-lite[lambda]' \
+	'boto3-stubs-lite[sns]' \
+	jsonpath_ng lxml \
+	pyyaml
 
 test:
-	.venv/bin/python  -m unittest discover tests/
+	.venv/bin/python -m unittest discover tests/
 
 venv:
 	python -m venv .venv
