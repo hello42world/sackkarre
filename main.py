@@ -10,7 +10,20 @@ import change_reporter
 import aws_deploy
 
 
-# todo: check required args function needed here
+def check_required_args(args) -> None :
+    req_args = {
+        'run': ['probe-key'],
+        'save': ['probe-key', 'probe-file'],
+        'dump': ['probe-key'],
+        'aws-deploy': ['aws-base-name']
+    }
+    cmd = args.cmd
+    if cmd in req_args:
+        for req_arg in req_args[cmd]:
+            req_arg_field = req_arg.replace('-', '_')
+            if getattr(args, req_arg_field) is None:
+                raise Exception(f'{cmd} requires --{req_arg}')
+
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(
@@ -27,12 +40,7 @@ def parse_cmd_line():
     parser.add_argument('-r', '--aws-region', default='us-east-1',
                         help='AWS region')
     args = parser.parse_args()
-    if args.cmd == 'save':
-        if args.probe_file is None:
-            raise Exception('save needs --probe-file')
-    if args.cmd == 'aws-deploy':
-        if args.aws_base_name is None:
-            raise Exception('aws-deploy needs --aws-base-name')
+    check_required_args(args)
     return args
 
 
