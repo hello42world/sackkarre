@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import boto3
 import mypy_boto3_dynamodb as dynamodb
 import argparse
@@ -48,6 +50,12 @@ def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
             print(f'Config key {config_key} not found')
     else:
         print("Config table doesn't exist.s")
+
+
+def aws_lambda(event, context):
+    print(f'Hello AWS.')
+    pprint(event)
+    pprint(context)
 
 
 def main():
