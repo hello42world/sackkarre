@@ -75,6 +75,16 @@ class TestProber(unittest.TestCase):
         self.assertFalse(state_repo.failure_called)
         self.assertIsNone(target_event)
 
+    def test_error_limit_reached(self):
+        state_repo = FakeProbeStateRepo(state=ProbeState(probe_name='foo', num_errors=Scanner.MAX_ERRORS - 1))
+        probe = Probe('foo', 'http://foo.foo', [])
+        prober = FakeProber(ProbeResult(the_probe=probe, is_error=True, error_msg='boom!'))
+        target_event = Scanner(state_repo, prober).check_probe(probe)
+        self.assertFalse(state_repo.success_called)
+        self.assertTrue(state_repo.failure_called)
+        self.assertEqual(TargetEventType.MAX_ERRORS_REACHED, target_event.event_type)
+        self.assertEqual('boom!', target_event.error_msg)
+
 
 if __name__ == '__main__':
     unittest.main()
