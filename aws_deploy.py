@@ -4,6 +4,7 @@ import botocore.client
 import mypy_boto3_lambda as aws_lambda
 import mypy_boto3_iam as aws_iam
 import mypy_boto3_sns as sns
+import mypy_boto3_events as events
 import json
 
 import aws
@@ -177,15 +178,35 @@ class AwsDeploy:
         except self.iam_client.meta.client.exceptions.NoSuchEntityException:
             pass
 
+
+    def deploy_event_bridge_rule(self, base_name: str):
+        eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
+        r = eb.put_rule(
+            Name=f'{base_name}_every_6_hours',
+            ScheduleExpression='rate(6 hours)',
+        )
+        print('===== EventBridge rule created =====')
+        pprint(r)
+
+
+    def delete_event_bridge_rule(self, base_name: str):
+        eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
+        rule_name = f'{base_name}_every_6_hours'
+        rules = eb.list_rules(NamePrefix=rule_name)
+        if len(rules['Rules']) > 0 and rules['Rules'][0]['Name'] == rule_name:
+            eb.delete_rule(Name=rule_name)
+
     def deploy_everything(self, zip_file: str, base_name: str) -> None:
         self.deploy_iam_policy(base_name=base_name)
         self.deploy_iam_role(base_name=base_name)
         self.attach_iam_policy(base_name=base_name)
         self.ensure_sns_topic(base_name=base_name)
         self.deploy_lambda(zip_file=zip_file, base_name=base_name)
+        self.deploy_event_bridge_rule(base_name=base_name)
 
     def delete_everything(self, base_name: str):
         self.delete_lambda(base_name=base_name)
         self.detach_iam_policy(base_name=base_name)
         self.delete_iam_policy(base_name=base_name)
         self.delete_iam_role(base_name=base_name)
+        self.delete_event_bridge_rule(base_name=base_name)
