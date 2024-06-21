@@ -22,7 +22,7 @@ class IProbeStateRepo:
 
 
 class ProbeStateRepo(IProbeStateRepo, BaseRepo):
-    PROBE_STATE_TABLE_DEFAULT = 'probe_state'
+    PROBE_STATE_TABLE_DEFAULT = 'sackkarre_probe_state'
 
     def __init__(self,
                  db: dynamodb.ServiceResource,
