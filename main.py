@@ -3,17 +3,19 @@ from lxml import etree
 import json
 import jsonpath_ng
 from urllib.request import urlopen
-import probe_spec
+import probe
 
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
 
 def foo():
-    url = 'https://www.lidl.de/p/parkside-plasmaschneider-pps-40-b3-4-4-5-bar/p100342928'
+    url = 'https://www.lidl.de/p/foozoo'
+
+    resource = urlopen(url)
 
     parser = etree.HTMLParser()
-    doc = etree.parse(urlopen(url), parser)
+    doc = etree.parse(resource, parser)
     res: list = doc.xpath("//script[@data-hid='json_data_product']")
     if len(res) == 0:
         raise "xpath failed"
@@ -34,8 +36,8 @@ def foo():
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-    #foo()
-    probe_spec.load('spec.yaml')
+    foo()
+    # probe_spec.load('spec.yaml')
 
 
 
