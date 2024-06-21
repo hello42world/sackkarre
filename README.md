@@ -31,4 +31,3 @@ How to install
 6. By default, the lambda will not have any triggers. 
    You can set it to run periodically by adding an EventBridge trigger.
 
-

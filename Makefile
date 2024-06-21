@@ -8,6 +8,7 @@ python_libs= \
 	'boto3-stubs-lite[sns]' \
 	'boto3-stubs-lite[iam]' \
 	jsonpath_ng lxml \
+	tabulate \
 	pyyaml
 
 .venv:

@@ -4,11 +4,16 @@ import mypy_boto3_dynamodb as dynamodb
 import argparse
 import os
 
+import tabulate
+
 import probe_io
 from config_repo import ConfigRepo
 from price_checker import run_price_check
 import change_reporter
 import aws_deploy
+
+import probe
+import probe_state_repo
 
 
 def check_required_args(args) -> None:
@@ -18,6 +23,7 @@ def check_required_args(args) -> None:
         'get-probe-list': ['probe-list-name'],
         'aws-deploy': ['base-name'],
         'aws-delete': ['base-name'],
+        'list-probe-state': []
     }
     cmd = args.cmd
     if cmd in req_args:
@@ -32,13 +38,15 @@ def parse_cmd_line():
         description='Watches marketplace pages and waits for changes in price')
 
     parser.add_argument('cmd',
-                        choices=['run-local', 'set-probe-list', 'get-probe-list', 'aws-deploy', 'aws-delete'],
+                        choices=['run-local', 'set-probe-list', 'get-probe-list', 'aws-deploy', 'aws-delete',
+                                 'list-probe-state'],
                         help='''
 run-local - Run the price checker locally (using db in the cloud) |
 set-probe-list - Save probe list file to the config |
 get-probe-list - Load probe list from the config |
-aws-deploy - Deploy the lambda and IAM policy/role to AWS () |
-aws-delete - Delete the lambda and IAM policy/role from AWS (leaves the data in dynamodb & the topic)
+aws-deploy - Deploy the lambda and IAM policy/role to AWS |
+aws-delete - Delete the lambda and IAM policy/role from AWS (leaves the data in dynamodb & the topic) |
+list-probe-state - list probes and their current state
                         ''')
     parser.add_argument('-n', '--probe-list-name', default='default_probe_list',
                         help='Name of the config value containing the probe list')
@@ -103,11 +111,28 @@ def get_reporter(base_name: str, aws_region: str) -> change_reporter.IChangeRepo
     return reporter
 
 
-def aws_lambda(event, context):
-    probe_list_name = os.environ['PROBE_LIST_NAME']
-    aws_region = os.environ['AWS_REGION']
-    base_name = context.function_name
-    run_price_check(get_db(aws_region), base_name, probe_list_name, get_reporter(base_name, aws_region))
+def list_price_probe_state(
+        db: dynamodb.ServiceResource,
+        base_name: str,
+        probe_list_name: str):
+    cr = ConfigRepo(db, base_name)
+    probe_spec_str = cr.find_value(probe_list_name)
+    if probe_spec_str is None:
+        raise Exception(f'Config key {probe_list_name} not found')
+    probes = probe_io.load_from_str(probe_spec_str)
+    state_repo = probe_state_repo.ProbeStateRepo(db, base_name)
+    headers = ['ID', 'NAME', 'VALUE', 'IS_ERR', 'LAST_UPD', 'URL']
+    table = []
+    for probe in probes:
+        row = [probe.probe_id, probe.probe_name]
+        state = state_repo.find_state(probe.probe_id)
+        if state is not None:
+            row.extend((state.value, state.has_error, state.last_updated.strftime("%Y-%m-%d, %H:%M:%S")))
+        else:
+            row.extend(('', '', ''))
+        row.append(probe.target_url)
+        table.append(row)
+    print(tabulate.tabulate(table, headers))
 
 
 def main():
@@ -126,6 +151,8 @@ def main():
         deploy_to_aws(args.aws_region, args.base_name)
     elif args.cmd == 'aws-delete':
         delete_from_aws(args.aws_region, args.base_name)
+    elif args.cmd == 'list-probe-state':
+        list_price_probe_state(get_db(args.aws_region), args.base_name, args.probe_list_name)
     else:
         raise Exception(f'Unknown command - {args.cmd}')
 
