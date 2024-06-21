@@ -1,7 +1,7 @@
 import mypy_boto3_dynamodb as dynamodb
 import urllib.request
 
-from scanner import Scanner, TargetChangeType, TargetChange
+from scanner import Scanner
 from probe_state_repo import ProbeStateRepo
 from prober import Prober
 import probe_io

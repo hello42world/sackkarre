@@ -43,7 +43,7 @@ class Prober(IProber):
         return str(data)
 
     def _step_xpath(self, data: str, xpath: str) -> str:
-        parser = etree.HTMLParser()
+        parser =     etree.HTMLParser()
         doc = etree.fromstring(data, parser)
         res: list = doc.xpath(xpath)
         if len(res) == 0:
