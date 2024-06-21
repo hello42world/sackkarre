@@ -1,20 +1,45 @@
+from typing import Optional
+
 from probe_state import ProbeState
 import mypy_boto3_dynamodb as dynamodb
 import datetime
+from dateutil import parser
 
 
 class ProbeStateRepo:
-    PROBE_STATE_TABLE = 'probe_state'
+    PROBE_STATE_TABLE_DEFAULT = 'probe_state'
 
     def __init__(self,
-                 db: dynamodb.ServiceResource):
+                 db: dynamodb.ServiceResource,
+                 table_name: str = PROBE_STATE_TABLE_DEFAULT,
+                 consistent_read: bool = False):
         self.db = db
-        self._ensure_schema()
+        self.table_name = table_name
+        self.consistent_read = consistent_read
 
-    def update_probe_with_success(self,
+    def find_state(self, probe_name: str) -> Optional[ProbeState]:
+        ps_tbl = self.db.Table(self.table_name)
+        s = ps_tbl.get_item(
+            Key={
+                'probe_name': probe_name
+            },
+            ConsistentRead=self.consistent_read
+        )
+        if 'Item' not in s.keys():
+            return None
+        item = s['Item']
+        return ProbeState(
+            probe_name=item['probe_name'],
+            value=item['value'],
+            num_errors=item['num_errors'],
+            last_error=item['last_error'],
+            last_updated=parser.parse(item['last_updated'])
+        )
+
+    def update_state_with_success(self,
                                   probe_name: str,
                                   probe_value: str):
-        ps_tbl = self.db.Table(self.PROBE_STATE_TABLE)
+        ps_tbl = self.db.Table(self.table_name)
         ps_tbl.put_item(
             Item={
                 'probe_name': probe_name,
@@ -25,10 +50,10 @@ class ProbeStateRepo:
             }
         )
 
-    def update_probe_with_failure(self,
+    def update_state_with_failure(self,
                                   probe_name: str,
                                   error_msg: str):
-        ps_tbl = self.db.Table(self.PROBE_STATE_TABLE)
+        ps_tbl = self.db.Table(self.table_name)
         ps_tbl.update_item(
             Key={
                 'probe_name': probe_name,
@@ -49,15 +74,12 @@ class ProbeStateRepo:
             }
         )
 
-    def get_probe_state(self, probe_name: str) -> ProbeState:
-        pass
-
-    def _ensure_schema(self):
-        if self.table_exists(self.PROBE_STATE_TABLE):
+    def ensure_schema(self):
+        if self.table_exists(self.table_name):
             return
 
         ps_tbl = self.db.create_table(
-            TableName=self.PROBE_STATE_TABLE,
+            TableName=self.table_name,
             AttributeDefinitions=[
                 {
                     'AttributeName': 'probe_name',
@@ -85,13 +107,13 @@ class ProbeStateRepo:
         return exists
 
     def kill_schema(self):
-        if self.table_exists(self.PROBE_STATE_TABLE):
-            ps_tbl = self.db.Table(self.PROBE_STATE_TABLE)
+        if self.table_exists(self.table_name):
+            ps_tbl = self.db.Table(self.table_name)
             ps_tbl.delete()
             ps_tbl.wait_until_not_exists()
 
     def dump(self):
-        for i in self.db.Table(self.PROBE_STATE_TABLE).scan()['Items']:
+        for i in self.db.Table(self.table_name).scan()['Items']:
             print(str(i))
 
     @staticmethod
