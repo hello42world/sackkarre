@@ -1,6 +1,6 @@
 import unittest
 from prober import Prober
-import probe
+import probe_io
 import os
 
 
@@ -9,7 +9,7 @@ def _get_html_fixture(name: str) -> str:
         return file.read()
 
 
-class MyTestCase(unittest.TestCase):
+class TestProber(unittest.TestCase):
     def test_lidl_page(self):
         probe_str = '''
 step_templates:
@@ -27,14 +27,14 @@ probes:
       - *lidl_xpath
       - *lidl_jpath
 '''
-        p = probe.load_from_str(probe_str)
+        p = probe_io.load_from_str(probe_str)
         prober = Prober(_get_html_fixture)
         probe_result = prober.do_probe(p[0])
         self.assertFalse(probe_result.is_error)
         self.assertEqual(139.00, float(probe_result.result))
 
     def test_lidl_bad_xpath(self):
-            probe_str = '''
+        probe_str = '''
         step_templates:
           lidl_xpath: &lidl_xpath
             step_type: XPATH
@@ -46,11 +46,11 @@ probes:
             steps:
               - *lidl_xpath
         '''
-            p = probe.load_from_str(probe_str)
-            prober = Prober(_get_html_fixture)
-            probe_result = prober.do_probe(p[0])
-            self.assertTrue(probe_result.is_error)
-            self.assertTrue(len(probe_result.error_msg) > 0)
+        p = probe_io.load_from_str(probe_str)
+        prober = Prober(_get_html_fixture)
+        probe_result = prober.do_probe(p[0])
+        self.assertTrue(probe_result.is_error)
+        self.assertTrue(len(probe_result.error_msg) > 0)
 
 
 if __name__ == '__main__':
