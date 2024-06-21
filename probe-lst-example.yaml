@@ -10,6 +10,7 @@ step_templates:
     - *lidl_jpath
 
 
+# Every probe watches one item on a marketplace.
 probes:
     # Any unique string
   - id: "lidl.battery-01"

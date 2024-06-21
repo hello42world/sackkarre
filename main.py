@@ -13,7 +13,7 @@ import aws_deploy
 
 def check_required_args(args) -> None:
     req_args = {
-        'run': ['probe-list-name'],
+        'run-local': ['probe-list-name'],
         'set-probe-list': ['probe-list-name', 'probe-list-file'],
         'get-probe-list': ['probe-list-name'],
         'aws-deploy': ['base-name'],
@@ -32,13 +32,13 @@ def parse_cmd_line():
         description='Watches marketplace pages and waits for changes in price')
 
     parser.add_argument('cmd',
-                        choices=['run', 'set-probe-list', 'get-probe-list', 'aws-deploy', 'aws-delete'],
+                        choices=['run-local', 'set-probe-list', 'get-probe-list', 'aws-deploy', 'aws-delete'],
                         help='''
-run - Run the price checker |
+run-local - Run the price checker locally (using db in the cloud) |
 set-probe-list - Save probe list file to the config |
 get-probe-list - Load probe list from the config |
 aws-deploy - Deploy the lambda and IAM policy/role to AWS () |
-aws-delete - Delete the lambda and IAM policy/role from AWS (leaves the data in dynamodb)
+aws-delete - Delete the lambda and IAM policy/role from AWS (leaves the data in dynamodb & the topic)
                         ''')
     parser.add_argument('-n', '--probe-list-name', default='default_probe_list',
                         help='Name of the config value containing the probe list')
@@ -116,7 +116,7 @@ def main():
         save_probe_spec(get_db(args.aws_region), args.base_name, args.probe_list_file, args.probe_list_name)
     elif args.cmd == 'get-probe-list':
         dump_probe_spec(get_db(args.aws_region), args.base_name, args.probe_list_name)
-    elif args.cmd == 'run':
+    elif args.cmd == 'run-local':
         run_price_check(
             get_db(args.aws_region),
             args.base_name,

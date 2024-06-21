@@ -3,6 +3,7 @@ import boto3
 import botocore.client
 import mypy_boto3_lambda as aws_lambda
 import mypy_boto3_iam as aws_iam
+import mypy_boto3_sns as sns
 import json
 
 import aws
@@ -63,6 +64,12 @@ class AwsDeploy:
             bytes_content = file_data.read()
         return bytes_content
 
+    def ensure_sns_topic(self, base_name: str):
+        the_sns: sns.ServiceResource = boto3.resource('sns', region_name=self.aws_region)
+        topic = the_sns.create_topic(Name=base_name)
+        print('===== SNS topic created =====')
+        pprint(topic)
+
     def delete_iam_role(self, base_name: str):
         try:
             self.iam_client.Role(base_name).delete()
@@ -104,6 +111,7 @@ class AwsDeploy:
         role = self.iam_client.Role(base_name)
         policy_arn = f'arn:aws:iam::{aws.account_id()}:policy/{base_name}'
         role.attach_policy(PolicyArn=policy_arn)
+        print('===== IAM policy attached =====')
 
     def deploy_iam_policy(self, base_name: str) -> None:
         policy_doc = {
@@ -173,6 +181,7 @@ class AwsDeploy:
         self.deploy_iam_policy(base_name=base_name)
         self.deploy_iam_role(base_name=base_name)
         self.attach_iam_policy(base_name=base_name)
+        self.ensure_sns_topic(base_name=base_name)
         self.deploy_lambda(zip_file=zip_file, base_name=base_name)
 
     def delete_everything(self, base_name: str):
