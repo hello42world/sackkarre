@@ -22,10 +22,10 @@ def parse_cmd_line():
                         help='Name of the config key containing the probe spec')
     parser.add_argument('-f', '--probe-file',
                         help='Path to the probe spec file')
-    parser.add_argument('-n', '--aws-base-name',
+    parser.add_argument('-n', '--aws-base-name', default='sackkarre',
                         help='Base name for naming objects in AWS when deploying')
-    parser.add_argument('-r', '--aws-region',
-                        help='AWS region', default='us-east-1')
+    parser.add_argument('-r', '--aws-region', default='us-east-1',
+                        help='AWS region')
     args = parser.parse_args()
     if args.cmd == 'save':
         if args.probe_file is None:
@@ -62,11 +62,11 @@ def dump_probe_spec(db: dynamodb.ServiceResource, config_key: str) -> None:
         print("Config table doesn't exist")
 
 
-def deploy_to_aws(aws_region: str) -> None:
+def deploy_to_aws(aws_region: str, base_name: str) -> None:
     zip_file = '.build/sackkarre.zip'
     if not os.path.isfile(zip_file):
         raise Exception(f'AWS lambda zip file {zip_file} not found. Run make lambda-build.')
-    aws_deploy.deploy_lambda(zip_file, aws_region)
+    aws_deploy.deploy_everything(zip_file, aws_region, base_name)
 
 
 def aws_lambda(event, context):
@@ -82,11 +82,13 @@ def main():
     elif args.cmd == 'dump':
         dump_probe_spec(get_db(args.aws_region), args.probe_key)
     elif args.cmd == 'run':
-        reporter = change_reporter.AwsSnsChangeReported(topic_name='sackkarre', aws_region=args.aws_region)
+        reporter = change_reporter.AwsSnsChangeReported(
+            topic_name=args.aws_base_name,
+            aws_region=args.aws_region)
         # reporter = change_reporter.StdoutChangeReporter()
         run_price_check(get_db(args.aws_region), args.probe_key, reporter)
     elif args.cmd == 'aws-deploy':
-        deploy_to_aws(args.aws_region)
+        deploy_to_aws(args.aws_region, args.aws_base_name)
 
 
 if __name__ == '__main__':

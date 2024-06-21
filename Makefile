@@ -1,4 +1,6 @@
 
+.PHONY: test venv pkg-install lambda-build aws-deploy 
+
 python_libs= \
 	boto3 \
 	'boto3-stubs-lite[dynamodb]' \
@@ -7,16 +9,18 @@ python_libs= \
 	jsonpath_ng lxml \
 	pyyaml
 
-test:
-	.venv/bin/python -m unittest discover tests/
-
-venv:
+.venv:
 	python -m venv .venv
 
-pkg-install:
+venv: .venv
+
+pkg-install: venv
 	.venv/bin/pip install $(python_libs)
 
-lambda-build:
+test: venv pkg-install
+	.venv/bin/python -m unittest discover tests/
+
+lambda-build: venv
 	[[ -d .build ]] && rm -r .build ; \
 	mkdir .build && \
 	.venv/bin/pip install \
@@ -28,3 +32,6 @@ lambda-build:
 		$(python_libs) && \
 	cp *.py .build && \
 	cd .build && zip -r sackkarre.zip .
+
+aws-deploy: lambda-build
+	.venv/bin/python main.py aws-deploy
