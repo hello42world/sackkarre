@@ -131,7 +131,7 @@ def list_price_probe_state(
         if state is not None:
             row.extend((state.value, state.old_value, state.has_error, state.last_updated.strftime("%Y-%m-%d, %H:%M:%S")))
         else:
-            row.extend(('', '', ''))
+            row.extend(('', '', '', ''))
         row.append(probe.target_url)
         table.append(row)
     print(tabulate.tabulate(table, headers))
