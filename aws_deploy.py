@@ -1,3 +1,4 @@
+import uuid
 from pprint import pprint
 import boto3
 import botocore.client
@@ -199,6 +200,7 @@ class AwsDeploy:
     def attach_event_bridge_target(self, base_name: str) -> None:
         lambda_arn = f'arn:aws:lambda:{self.aws_region}:{aws.account_id()}:function:{base_name}'
         rule_name = f'{base_name}_every_6_hours'
+        # Add Target
         eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
         eb.put_targets(
             Rule=rule_name,
@@ -208,10 +210,29 @@ class AwsDeploy:
             }]
         )
 
+        # Allow the Event bridge rule to call the lambda
+        lambda_client: aws_lambda.LambdaClient = boto3.client(
+            'lambda',
+            region_name=self.aws_region)
+        lambda_client.add_permission(
+            FunctionName=lambda_arn,
+            StatementId=f'AWSEvents_{rule_name}_Id{base_name}',
+            Action='lambda:InvokeFunction',
+            Principal= "events.amazonaws.com",
+            SourceArn=f'arn:aws:events:{self.aws_region}:{aws.account_id()}:rule/{rule_name}',
+        )
+        print('===== EventBridge rule attached =====')
+
+
     def detach_event_bridge_target(self, base_name: str) -> None:
         eb: events.EventBridgeClient = boto3.client(service_name='events', region_name=self.aws_region)
         rule_name = f'{base_name}_every_6_hours'
-        eb.remove_targets(Rule=rule_name, Ids=[base_name])
+        rules = eb.list_rules(NamePrefix=rule_name)
+        if len(rules['Rules']) == 0:
+            return
+        targets = eb.list_targets_by_rule(Rule=rule_name)
+        if len(targets['Targets']) > 0:
+            eb.remove_targets(Rule=rule_name, Ids=[base_name])
 
 
     def deploy_everything(self, zip_file: str, base_name: str) -> None:
